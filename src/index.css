@@ -1,0 +1,209 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "leaflet/dist/leaflet.css";
+
+/* ── Coastal Drift tokens ── */
+:root {
+  --c-bg: #ede7dc;
+  --c-surface: #fbf7f0;
+  --c-surface-alt: #e4d8c8;
+  --c-primary: #1a6870;
+  --c-primary-dk: #104e58;
+  --c-primary-lt: #d4eff2;
+  --c-accent: #a07048;
+  --c-accent-lt: #f4ead8;
+  --c-text: #0e1e20;
+  --c-text-md: #3a6068;
+  --c-text-sm: #6a9098;
+  --c-border: #cebfac;
+  --c-border-str: #b0a090;
+
+  --f-display: "Playfair Display", Georgia, serif;
+  --f-ui: "DM Sans", system-ui, sans-serif;
+  --f-body: "Source Sans 3", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--f-body);
+  background: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── animations ── */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+@keyframes ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+@keyframes float3d {
+  0%,
+  100% {
+    transform: perspective(600px) rotateX(3deg) rotateY(-3deg) translateY(0);
+  }
+  50% {
+    transform: perspective(600px) rotateX(-2deg) rotateY(3deg) translateY(-10px);
+  }
+}
+@keyframes screenIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--w);
+  }
+}
+
+.blink {
+  animation: blink 1.2s infinite;
+}
+.ring {
+  animation: ring 2s ease-out infinite;
+}
+.ring2 {
+  animation: ring 2s ease-out 0.6s infinite;
+}
+.float-3d {
+  animation: float3d 8s ease-in-out infinite;
+}
+.screen-in {
+  animation: screenIn 220ms ease forwards;
+}
+
+/* ── card 3-D flip ── */
+.scene {
+  perspective: 1000px;
+}
+.card-3d {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+.scene:hover .card-3d {
+  transform: rotateY(180deg);
+}
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.face-back {
+  transform: rotateY(180deg);
+}
+
+/* ── stat hover tilt ── */
+.stat-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+.stat-3d:hover {
+  transform: perspective(600px) rotateX(-6deg) rotateY(4deg) scale(1.03);
+}
+
+/* ── cam card ── */
+.cam-card {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.cam-card:hover {
+  transform: scale(1.04) translateZ(0);
+  box-shadow: 0 12px 32px rgba(26, 104, 112, 0.22);
+}
+
+/* ── progress ── */
+.progress-track {
+  background: var(--c-surface-alt);
+  border-radius: 999px;
+  overflow: hidden;
+  height: 6px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+/* ── glass ── */
+.glass {
+  background: rgba(251, 247, 240, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(251, 247, 240, 0.6);
+}
+
+/* ── Leaflet popup overrides ── */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  box-shadow: 0 8px 32px rgba(26, 104, 112, 0.22) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: 230px !important;
+  min-width: 230px !important;
+}
+.leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+.leaflet-control-zoom a {
+  font-family: var(--f-ui) !important;
+}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--c-surface-alt);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 99px;
+}
+
+/* ── nri glow ── */
+.nri-glow {
+  box-shadow: 0 0 24px rgba(160, 112, 72, 0.35);
+}
