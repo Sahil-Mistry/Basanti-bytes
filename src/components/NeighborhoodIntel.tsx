@@ -261,16 +261,14 @@ export default function NeighborhoodIntel() {
     setError(null);
 
     apiClient
-      .post<NeighborhoodData>(
-        "/neighborhood/score",
-        {
+      .get<NeighborhoodData>("/locality/score", {
+        params: {
           lat: selArea.lat,
           lng: selArea.lng,
-          builderId: selArea.builderId,
           locality: selArea.label,
         },
-        { signal: ctrl.signal },
-      )
+        signal: ctrl.signal,
+      })
       .then((res) => {
         setData(res.data);
         setLoading(false);
@@ -819,10 +817,10 @@ export default function NeighborhoodIntel() {
                     ? "Within locality"
                     : `${data.sources.futureGrowth.distanceKm} km away`}
                   {" · "}
-                  {data.sources.futureGrowth.featureType
-                    .charAt(0)
+                  {data.sources.futureGrowth?.featureType
+                    ?.charAt(0)
                     .toUpperCase() +
-                    data.sources.futureGrowth.featureType.slice(1)}{" "}
+                    data.sources.futureGrowth.featureType?.slice(1)}{" "}
                   infrastructure
                 </div>
               </div>

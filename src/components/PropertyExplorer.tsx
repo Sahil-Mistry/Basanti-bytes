@@ -139,6 +139,20 @@ export default function PropertyExplorer() {
     navigate(`/neighborhood-intel?${params.toString()}`);
   }
 
+  function handleViewDetails() {
+    if (!sel) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      lat: String(sel.lat),
+      lon: String(sel.lng),
+      name: sel.loc,
+    });
+
+    navigate(`/property-details/${sel.id}?${params.toString()}`);
+  }
+
   return (
     <div className="screen-in" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
@@ -266,11 +280,17 @@ export default function PropertyExplorer() {
                 </div>
               ))}
             </div>
-            <button style={{
+            <button
+              type="button"
+              style={{
               width: '100%', background: 'var(--c-primary)', color: '#FBF7F0',
               border: 'none', borderRadius: 8, padding: '8px 0',
               fontSize: 13, fontWeight: 600, fontFamily: 'var(--f-ui)', cursor: 'pointer',
-            }} onClick={() => navigate(`/property-explorer/${sel.id}`)}>View Details</button>
+            }}
+              onClick={handleViewDetails}
+            >
+              View Details
+            </button>
           </div>
         )}
       </div>

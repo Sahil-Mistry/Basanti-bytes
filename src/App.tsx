@@ -18,6 +18,9 @@ export default function App() {
         <Route index element={<PropertyExplorer />} />
         <Route path=":propertyId" element={<PropertyDetails />} />
       </Route>
+      <Route path="/property-details/:propertyId" element={<WorkspaceLayout />}>
+        <Route index element={<PropertyDetails />} />
+      </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 

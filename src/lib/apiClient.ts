@@ -8,12 +8,19 @@ import axios, {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 const AUTH_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN_KEY ?? 'auth_token';
 
-function getAuthToken(): string | null {
+function getStoredAuthToken(): string | null {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+  return (
+    window.localStorage.getItem(AUTH_TOKEN_KEY) ??
+    window.sessionStorage.getItem(AUTH_TOKEN_KEY)
+  );
+}
+
+function getAuthToken(): string | null {
+  return getStoredAuthToken();
 }
 
 function attachAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
@@ -34,6 +41,7 @@ function attachAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequ
 function handleResponseError(error: AxiosError): Promise<never> {
   if (error.response?.status === 401 && typeof window !== 'undefined') {
     window.localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
   }
 
   return Promise.reject(error);
@@ -51,4 +59,4 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(attachAuthHeader, error => Promise.reject(error));
 apiClient.interceptors.response.use(response => response, handleResponseError);
 
-export { AUTH_TOKEN_KEY };
+export { AUTH_TOKEN_KEY, getStoredAuthToken };

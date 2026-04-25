@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
+import { getStoredAuthToken } from '../lib/apiClient';
 
 type NavItem = { path: string; label: string };
 
@@ -10,6 +11,8 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export default function Navigation() {
+  const isLoggedIn = Boolean(getStoredAuthToken());
+
   return (
     <nav
       style={{
@@ -101,41 +104,23 @@ export default function Navigation() {
       </div>
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            background: '#FCEAE4',
-            borderRadius: 999,
-            padding: '4px 10px',
-            fontSize: 11,
-            fontWeight: 700,
-            color: '#9A2A18',
-            fontFamily: 'var(--f-ui)',
-          }}
-        >
-          <span
-            className="blink"
-            style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#9A2A18' }}
-          />
-          Live
-        </div>
-        <Link
-          to="/login"
-          style={{
-            fontFamily: 'var(--f-ui)',
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--c-primary)',
-            textDecoration: 'none',
-            border: '1px solid var(--c-primary)',
-            borderRadius: 999,
-            padding: '6px 12px',
-          }}
-        >
-          Login
-        </Link>
+        {!isLoggedIn && (
+          <Link
+            to="/login"
+            style={{
+              fontFamily: 'var(--f-ui)',
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--c-primary)',
+              textDecoration: 'none',
+              border: '1px solid var(--c-primary)',
+              borderRadius: 999,
+              padding: '6px 12px',
+            }}
+          >
+            Login
+          </Link>
+        )}
         <div
           style={{
             width: 32,
