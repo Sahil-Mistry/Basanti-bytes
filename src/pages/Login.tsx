@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AxiosError } from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { apiClient, AUTH_TOKEN_KEY } from '../lib/apiClient';
 
 type LoginResponse = {
@@ -10,8 +10,17 @@ type LoginResponse = {
   message?: string;
 };
 
+type RedirectState = {
+  from?: {
+    pathname?: string;
+    search?: string;
+    hash?: string;
+  };
+};
+
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +43,12 @@ export default function Login() {
         window.localStorage.setItem(AUTH_TOKEN_KEY, token);
       }
 
-      navigate('/');
+      const from = (location.state as RedirectState | null)?.from;
+      const redirectTo = from?.pathname
+        ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+        : '/property-explorer';
+
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const apiMessage = axiosError.response?.data?.message;

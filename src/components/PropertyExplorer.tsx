@@ -1,18 +1,73 @@
 import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 import L from 'leaflet';
+import { useNavigate } from 'react-router-dom';
 import { PROPS, PIN_COLOR, STS, type PropType } from '../data';
 import Badge from './Badge';
 
 type FilterType = 'all' | PropType;
+type NominatimPlace = {
+  lat: string;
+  lon: string;
+  name: string;
+  display_name: string;
+};
 
 export default function PropertyExplorer() {
+  const navigate = useNavigate();
   const mapRef  = useRef<HTMLDivElement>(null);
   const mapInst = useRef<L.Map | null>(null);
   const [selId,      setSelId]      = useState(1);
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<NominatimPlace[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const filtered = filterType === 'all' ? PROPS : PROPS.filter(p => p.type === filterType);
   const sel = PROPS.find(p => p.id === selId);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim());
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (!debouncedSearchTerm) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsSearching(true);
+
+    axios
+      .get<NominatimPlace[]>('https://nominatim.openstreetmap.org/search', {
+        params: {
+          q: debouncedSearchTerm,
+          format: 'json',
+        },
+        signal: controller.signal,
+      })
+      .then(response => {
+        setSearchResults(response.data);
+      })
+      .catch(error => {
+        if (axios.isCancel(error)) {
+          return;
+        }
+        setSearchResults([]);
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+
+    return () => controller.abort();
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     if (mapInst.current || !mapRef.current) return;
@@ -71,6 +126,18 @@ export default function PropertyExplorer() {
   }, []);
 
   const tabs: [FilterType, string][] = [['all', 'All'], ['verified', 'Verified'], ['alert', 'Alerts'], ['premium', 'Premium']];
+
+  function handleSearchSelect(place: NominatimPlace) {
+    const params = new URLSearchParams({
+      name: place.display_name,
+      lat: place.lat,
+      lon: place.lon,
+    });
+
+    setSearchTerm(place.display_name);
+    setSearchResults([]);
+    navigate(`/neighborhood-intel?${params.toString()}`);
+  }
 
   return (
     <div className="screen-in" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -203,7 +270,7 @@ export default function PropertyExplorer() {
               width: '100%', background: 'var(--c-primary)', color: '#FBF7F0',
               border: 'none', borderRadius: 8, padding: '8px 0',
               fontSize: 13, fontWeight: 600, fontFamily: 'var(--f-ui)', cursor: 'pointer',
-            }}>View Details</button>
+            }} onClick={() => navigate(`/property-explorer/${sel.id}`)}>View Details</button>
           </div>
         )}
       </div>
@@ -230,6 +297,8 @@ export default function PropertyExplorer() {
               color: 'var(--c-text)', outline: 'none',
               border: 'none',
             }}
+            value={searchTerm}
+            onChange={event => setSearchTerm(event.target.value)}
             placeholder="Search areas, landmarks, pin codes…"
           />
           <span style={{
@@ -238,25 +307,56 @@ export default function PropertyExplorer() {
             borderRadius: 4, padding: '2px 5px', color: 'var(--c-text-sm)',
           }}>⌘K</span>
         </div>
+        {(isSearching || searchResults.length > 0 || Boolean(debouncedSearchTerm)) && (
+          <div
+            className="glass"
+            style={{
+              position: 'absolute',
+              top: 64,
+              left: 16,
+              right: 80,
+              zIndex: 1000,
+              borderRadius: 12,
+              maxHeight: 260,
+              overflowY: 'auto',
+              border: '1px solid rgba(251, 247, 240, 0.6)',
+              boxShadow: '0 8px 24px rgba(0,0,0,.12)',
+            }}
+          >
+            {isSearching ? (
+              <div style={{ padding: '10px 14px', fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--c-text-sm)' }}>
+                Searching...
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div style={{ padding: '10px 14px', fontFamily: 'var(--f-ui)', fontSize: 12, color: 'var(--c-text-sm)' }}>
+                No result found
+              </div>
+            ) : (
+              searchResults.map((place, index) => (
+                <button
+                  key={`${place.lat}-${place.lon}-${index}`}
+                  type="button"
+                  onClick={() => handleSearchSelect(place)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    borderBottom: index === searchResults.length - 1 ? 'none' : '1px solid var(--c-border)',
+                    background: 'transparent',
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--f-body)',
+                    fontSize: 13,
+                    color: 'var(--c-text)',
+                  }}
+                >
+                  {place.display_name}
+                </button>
+              ))
+            )}
+          </div>
+        )}
 
-        {/* Filter pills */}
-        <div style={{ position: 'absolute', top: 66, left: 16, zIndex: 1000, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {([['All', 'var(--c-primary)', true], ['✓ Verified', '#0E5860', false], ['★ Premium', '#7A5030', false], ['⚠ Alert', '#9A2A18', false], ['2–3 BHK', 'var(--c-text-md)', false]] as [string, string, boolean][]).map(([lbl, c, active]) => (
-            <button
-              key={lbl}
-              className="glass"
-              style={{
-                borderRadius: 999, padding: '6px 12px',
-                fontSize: 12, fontWeight: 600,
-                fontFamily: 'var(--f-ui)',
-                color:      active ? '#FBF7F0' : 'var(--c-text-md)',
-                background: active ? c : 'rgba(251,247,240,.82)',
-                border: `1.5px solid ${active ? c : 'rgba(251,247,240,.6)'}`,
-                cursor: 'pointer',
-              }}
-            >{lbl}</button>
-          ))}
-        </div>
       </div>
     </div>
   );

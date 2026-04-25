@@ -77,7 +77,7 @@ export default function Navigation() {
           <NavLink
             key={item.path}
             to={item.path}
-            end
+            end={item.path !== '/property-explorer'}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
